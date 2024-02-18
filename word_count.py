@@ -67,7 +67,8 @@ def save_output(dataframe, output_filename):
         dataframe (pandas.DataFrame): The DataFrame to be saved.
         output_filename (str): The name of the output file.
     """
-    dataframe.to_csv(output_filename, index = False, sep = '\t', header = False)
+    dataframe.to_csv(output_filename, index=False, sep='\t', header=True)
+
 
 
 #
