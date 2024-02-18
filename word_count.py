@@ -7,67 +7,68 @@ import pandas as pd
 import string
 
 def load_input(input_directory):
-    """
-    Load text files in 'input_directory/' and store the content in a Pandas DataFrame.
+    """Load input files into a DataFrame.
     
-    Each line of the text file will be treated as a separate entry in the DataFrame.
-    
-    Parameters:
-        input_directory (str): The directory path where the text files are located.
+    Args:
+        input_directory (str): The directory containing the input files.
         
     Returns:
-        pandas.DataFrame: A DataFrame containing the text content of the files.
+        pandas.DataFrame: The DataFrame containing the input files.
     """
-    files = glob.glob(f"{input_directory}/*.txt")
-    data = []
-    for file in files:
-        with open(file, "r") as f:
-            lines = f.readlines()
-            data.extend(lines)
-    df = pd.DataFrame(data, columns=["text"])
+    # Get a list of all input files
+    input_files = glob.glob(input_directory + '/*.txt')
+    
+    # Read all input files into a single DataFrame
+    df = pd.concat((pd.read_csv(f, sep='\t', header=None, names=['text']) for f in input_files), ignore_index=True)
+    
     return df
 
 
 def clean_text(dataframe):
-    """
-    Text cleaning
+    """Clean text
     
-    This function takes a dataframe as input and performs text cleaning operations on the 'text' column.
-    It removes punctuation and converts the text to lowercase.
-    
-    Args:
-        dataframe (pandas.DataFrame): The input dataframe containing the 'text' column.
-        
-    Returns:
-        pandas.DataFrame: The dataframe with cleaned text.
-    """
-    dataframe['text'] = dataframe['text'].apply(lambda x: x.lower().translate(str.maketrans('', '', string.punctuation)))
-    return dataframe
-
-
-def count_words(dataframe):
-    """Word count
-    
-    Count the number of words in the text.
+    Remove punctuation and convert text to lowercase.
     
     Args:
         dataframe (pandas.DataFrame): The input dataframe containing the text column.
         
     Returns:
-        pandas.DataFrame: The input dataframe with an additional column 'word_count' containing the word count for each text.
+        pandas.DataFrame: The input dataframe with an additional column 'clean_text' containing the cleaned text.
     """
-    dataframe['word_count'] = dataframe['text'].apply(lambda x: len(x.split()))
+    dataframe['clean_text'] = dataframe['text'].apply(lambda x: x.translate(str.maketrans('', '', string.punctuation)).lower())
     return dataframe
 
 
-def save_output(dataframe, output_filename):
-    """Save output to a file.
+def count_words(dataframe):
+    """Count words.
     
     Args:
-        dataframe (pandas.DataFrame): The DataFrame to be saved.
-        output_filename (str): The name of the output file.
+        dataframe (pandas.DataFrame): The input dataframe containing the clean_text column.
+        
+    Returns:
+        pandas.DataFrame: A DataFrame containing the word counts.
     """
-    dataframe.to_csv(output_filename, index=False, sep='\t', header=True)
+    # Split the text into words
+    words = dataframe['clean_text'].str.split(expand=True).stack()
+    
+    # Count the words
+    word_counts = words.value_counts().reset_index()
+    word_counts.columns = ['word', 'count']
+    
+    return word_counts
+
+
+def save_output(dataframe, output_filename):
+    """Save output.
+    
+    Args:
+        dataframe (pandas.DataFrame): The DataFrame containing the word counts.
+        output_filename (str): The name of the output file.
+        
+    Returns:
+        None
+    """
+    dataframe.to_csv(output_filename, sep='\t', index=False, header=False)
 
 
 
